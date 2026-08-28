@@ -61,7 +61,8 @@ On 401 the token is re-fetched once; if that fails a red banner is shown and pol
 | `o` | open selected run in browser |
 | `a` / `x` | approve / reject pending stage on selected release (`y` to confirm) |
 | `r` | refresh now |
-| `tab`, `1`–`9`, `h`/`l` | switch project (narrow terminal / >2 projects) |
+| `h` / `l` / `←` / `→` / `tab` | jump to the other project pane (same row) |
+| `1`–`9` | switch project tab (narrow terminal / >2 projects) |
 | `q` | quit |
 
 Polls every 5s while anything is running / awaiting approval, else every 30s.

@@ -96,13 +96,21 @@ export function App({ source, approver, quiet, org }: { source: Source; approver
         setConfirm({ action: input === 'a' ? 'approve' : 'reject', track: current, stage });
         return;
       }
+      const dir = key.rightArrow || input === 'l' || key.tab ? 1 : key.leftArrow || input === 'h' ? -1 : 0;
+      if (dir && !useTabs) {
+        // jump to the neighbouring pane, keeping the same row position where possible
+        const sizes = visibleProjects.map((p) => p.pipelines.length + p.releases.length);
+        let pi = 0, off = 0;
+        while (pi < sizes.length - 1 && selected >= off + sizes[pi]!) off += sizes[pi++]!;
+        const within = selected - off;
+        const target = (pi + dir + sizes.length) % sizes.length;
+        const targetOff = sizes.slice(0, target).reduce((a, b) => a + b, 0);
+        setSelected(targetOff + Math.min(within, Math.max(0, sizes[target]! - 1)));
+        return;
+      }
       if (useTabs) {
-        if (key.tab || key.rightArrow || input === 'l') {
-          setTab((t) => (t + 1) % poll.projects.length);
-          setSelected(0);
-        }
-        if (key.leftArrow || input === 'h') {
-          setTab((t) => (t - 1 + poll.projects.length) % poll.projects.length);
+        if (dir) {
+          setTab((t) => (t + dir + poll.projects.length) % poll.projects.length);
           setSelected(0);
         }
         const n = Number(input);
@@ -193,7 +201,7 @@ export function App({ source, approver, quiet, org }: { source: Source; approver
           <Text color={activeMsg.color}>{activeMsg.text}</Text>
         ) : (
           <Text dimColor>
-            j/k move · enter expand · o open · a approve · x reject · r refresh · q quit
+            j/k move · h/l pane · enter expand · o open · a approve · x reject · r refresh · q quit
             {useTabs ? ' · tab/1-9 project' : ''}
           </Text>
         )}
