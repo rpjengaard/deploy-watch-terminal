@@ -1,0 +1,23 @@
+{
+  "name": "deploy-watch",
+  "version": "0.1.0",
+  "description": "TUI to watch Azure DevOps pipelines and releases",
+  "type": "module",
+  "bin": { "deploy-watch": "./src/cli.tsx" },
+  "scripts": {
+    "start": "bun run src/cli.tsx",
+    "mock": "bun run src/cli.tsx --mock",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ink": "^7.1.1",
+    "ink-spinner": "^5.0.0",
+    "react": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.0",
+    "@types/react": "^19.2.18",
+    "typescript": "^7.0.2"
+  }
+}
