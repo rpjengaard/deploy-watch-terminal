@@ -19,21 +19,24 @@ Terminal UI that watches Azure DevOps **pipelines and releases** live — across
 
 ## Install
 
-Requires [Bun](https://bun.sh) ≥ 1.1 and the [Azure CLI](https://learn.microsoft.com/cli/azure/) (`az login`) — or a PAT.
+Needs the [Azure CLI](https://learn.microsoft.com/cli/azure/) (`az login`) — or a PAT. The repo is private, so you need read access first (ask the owner).
+
+**Binary** (recommended, no Bun needed) — with the [GitHub CLI](https://cli.github.com) logged in:
 
 ```sh
-bun install -g github:rpjengaard/deploy-watch-terminal
-```
-
-Or a standalone binary (no Bun needed) from [Releases](https://github.com/rpjengaard/deploy-watch-terminal/releases):
-
-```sh
-curl -L -o /usr/local/bin/deploy-watch \
-  https://github.com/rpjengaard/deploy-watch-terminal/releases/latest/download/deploy-watch-darwin-arm64
+gh release download -R rpjengaard/deploy-watch-terminal -p deploy-watch-darwin-arm64 -O /usr/local/bin/deploy-watch
 chmod +x /usr/local/bin/deploy-watch
 ```
 
-From a clone: `bun install && bun link`.
+Assets: `deploy-watch-darwin-arm64` (Apple Silicon), `deploy-watch-darwin-x64` (Intel Mac), `deploy-watch-linux-x64`. Or download from the [Releases](https://github.com/rpjengaard/deploy-watch-terminal/releases) page. macOS may need `xattr -d com.apple.quarantine /usr/local/bin/deploy-watch` on first run (unsigned binary).
+
+**From source** — needs [Bun](https://bun.sh) ≥ 1.1 and an SSH key on GitHub (`bun` cannot install private repos over HTTPS):
+
+```sh
+bun install -g git+ssh://git@github.com/rpjengaard/deploy-watch-terminal.git
+```
+
+or clone and `bun install && bun link`.
 
 ## Setup (2 commands)
 
