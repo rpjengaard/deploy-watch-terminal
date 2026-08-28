@@ -20,15 +20,6 @@ deploy-watch --mock                   # fixture data, no network — try the UI
 deploy-watch --help
 ```
 
-### Find a solution by job number
-
-```
-deploy-watch find 10344          # search every project in the org
-deploy-watch find 10344 --add    # …and append the matches to config.json
-```
-
-Matches pipelines/releases whose name, folder or project contains the term, grouped per project/folder, each with a ready-to-paste config entry.
-
 Without `bun link`: `bun run start` / `bun run mock` from this folder.
 
 | option | short | effect |
@@ -36,10 +27,43 @@ Without `bun link`: `bun run start` / `bun run mock` from this folder.
 | `--project <key>` | `-p` | only watch this project key; repeat for several. Keys come from `config.json` |
 | `--quiet` | | disable bell + macOS notifications |
 | `--mock` | | render from fixture data (simulates a deploy → pending approval → done) |
-| `find <term>` | | search org for pipelines/releases matching `<term>`; `--add` appends to config |
 | `--help` | `-h` | usage |
 
-Env: `AZDO_PAT` — use a PAT instead of `az` token (see Auth).
+### Find a solution by job number
+
+```
+deploy-watch find 10344          # search every project in the org
+deploy-watch find 10344 --add    # …and append the matches to config.json
+deploy-watch -p 10344ra          # watch it
+```
+
+Searches all projects in the org for pipelines/releases whose **name, folder or project** contains the term (case-insensitive), grouped per project/folder, each with a ready-to-paste config entry:
+
+```
+Common \ 10344ra
+  pipeline   213  10344ra BE Dev Build
+  pipeline   214  10344ra BE Main Build
+  pipeline   223  10344ra FE Build and Deploy
+  release     24  10344ra dev be deploy
+  release     25  10344ra main be deploy
+  config:   {"key":"10344ra","name":"Common","folder":"10344ra"}
+
+Run again with --add to append these to ~/.config/deploy-watch/config.json
+```
+
+| command / option | effect |
+|---|---|
+| `find <term>` | list matches; `<term>` is usually a job number (`10344`) but any text works (`danish`, `radikale`) |
+| `find <term> --add` | append every match group to `config.json`; groups whose key already exists are skipped |
+
+Solutions in a shared project (e.g. `Common`) get a `folder`-scoped entry; standalone projects get a plain entry keyed by the project's first word.
+
+### Environment
+
+| variable | effect |
+|---|---|
+| `AZDO_PAT` | use a PAT instead of the `az` CLI token (see Auth) |
+| `DEPLOY_WATCH_CONFIG` | path to config file (default `~/.config/deploy-watch/config.json`) |
 
 ## Auth
 
@@ -73,7 +97,6 @@ Solution in the shared `Common` project:
 { "key": "10260ny", "name": "Common", "folder": "10260ny" }
 ```
 
-Env: `DEPLOY_WATCH_CONFIG=/path/to/config.json` overrides the config location.
 
 ## Keys
 
