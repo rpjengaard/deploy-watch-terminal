@@ -14,6 +14,12 @@ import {
 const API = 'api-version=7.1';
 const HISTORY = 3; // completed runs shown after latest
 
+export interface DefSummary {
+  id: number;
+  name: string;
+  path: string;
+}
+
 export interface Approver {
   approve(projectName: string, approvalId: number): Promise<void>;
   reject(projectName: string, approvalId: number): Promise<void>;
@@ -55,6 +61,22 @@ export class AdoClient implements Approver {
         }
       }),
     );
+  }
+
+  // ---------- discovery (used by `find`) ----------
+
+  async listProjects(): Promise<{ id: string; name: string }[]> {
+    const r = await this.request<{ value: any[] }>(`https://dev.azure.com/${this.cfg.org}/_apis/projects?$top=500&${API}`);
+    return r.value.map((p) => ({ id: p.id, name: p.name })).sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async listDefinitions(projectName: string): Promise<{ pipelines: DefSummary[]; releases: DefSummary[] }> {
+    const [b, r] = await Promise.all([
+      this.request<{ value: any[] }>(`${this.base('dev', projectName)}/build/definitions?${API}`),
+      this.request<{ value: any[] }>(`${this.base('vsrm', projectName)}/release/definitions?${API}`).catch(() => ({ value: [] })),
+    ]);
+    const map = (d: any): DefSummary => ({ id: d.id, name: d.name, path: d.path ?? '\\' });
+    return { pipelines: b.value.map(map), releases: r.value.map(map) };
   }
 
   // ---------- pipelines (build API) ----------

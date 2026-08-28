@@ -20,6 +20,15 @@ deploy-watch --mock                   # fixture data, no network — try the UI
 deploy-watch --help
 ```
 
+### Find a solution by job number
+
+```
+deploy-watch find 10344          # search every project in the org
+deploy-watch find 10344 --add    # …and append the matches to config.json
+```
+
+Matches pipelines/releases whose name, folder or project contains the term, grouped per project/folder, each with a ready-to-paste config entry.
+
 Without `bun link`: `bun run start` / `bun run mock` from this folder.
 
 | option | short | effect |
@@ -27,6 +36,7 @@ Without `bun link`: `bun run start` / `bun run mock` from this folder.
 | `--project <key>` | `-p` | only watch this project key; repeat for several. Keys come from `config.json` |
 | `--quiet` | | disable bell + macOS notifications |
 | `--mock` | | render from fixture data (simulates a deploy → pending approval → done) |
+| `find <term>` | | search org for pipelines/releases matching `<term>`; `--add` appends to config |
 | `--help` | `-h` | usage |
 
 Env: `AZDO_PAT` — use a PAT instead of `az` token (see Auth).
