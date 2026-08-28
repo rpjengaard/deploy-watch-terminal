@@ -2,14 +2,34 @@
 
 Terminal UI that watches Azure DevOps pipelines and releases live.
 
+## Install
+
 ```
 bun install
 bun link          # exposes `deploy-watch` on PATH
-deploy-watch                 # all configured projects
-deploy-watch -p 8903da       # one project
-deploy-watch --quiet         # no bell / macOS notifications
-deploy-watch --mock          # fixture data, no network
 ```
+
+## Start
+
+```
+deploy-watch                          # watch all configured projects
+deploy-watch -p 8903da                # only one project
+deploy-watch -p 8903da -p 10013da     # pick several (repeatable)
+deploy-watch --quiet                  # no bell / macOS notifications
+deploy-watch --mock                   # fixture data, no network — try the UI
+deploy-watch --help
+```
+
+Without `bun link`: `bun run start` / `bun run mock` from this folder.
+
+| option | short | effect |
+|---|---|---|
+| `--project <key>` | `-p` | only watch this project key; repeat for several. Keys come from `config.json` |
+| `--quiet` | | disable bell + macOS notifications |
+| `--mock` | | render from fixture data (simulates a deploy → pending approval → done) |
+| `--help` | `-h` | usage |
+
+Env: `AZDO_PAT` — use a PAT instead of `az` token (see Auth).
 
 ## Auth
 
