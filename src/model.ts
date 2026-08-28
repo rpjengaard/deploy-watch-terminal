@@ -156,3 +156,16 @@ export function releaseStatus(stages: Stage[]): Status {
   if (!done.length) return 'notStarted';
   return 'unknown';
 }
+
+const ACTIVE_ORDER: Record<string, number> = { 'pending-approval': 0, running: 1, queued: 2 };
+
+/** Every track whose latest run is active, approvals first, then oldest-started first. */
+export function activeTracks(projects: ProjectData[]): Track[] {
+  return allTracks(projects)
+    .filter((t) => t.latest && isActive(t.latest.status))
+    .sort((a, b) => {
+      const d = (ACTIVE_ORDER[a.latest!.status] ?? 9) - (ACTIVE_ORDER[b.latest!.status] ?? 9);
+      if (d) return d;
+      return Date.parse(a.latest!.started ?? a.latest!.queued) - Date.parse(b.latest!.started ?? b.latest!.queued);
+    });
+}

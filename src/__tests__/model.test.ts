@@ -59,3 +59,13 @@ describe('inFolder', () => {
     expect(displayProject({ key: 'k', name: 'X' })).toBe('X');
   });
 });
+
+import { activeTracks } from '../model.ts';
+describe('activeTracks', () => {
+  test('mock: approvals first, then running, then queued', () => {
+    const t = activeTracks(mockProjects(3));
+    expect(t.map((x) => x.latest!.status)).toEqual(['pending-approval', 'queued']);
+    const t0 = activeTracks(mockProjects(0));
+    expect(t0.map((x) => x.latest!.status)).toEqual(['running', 'running', 'queued']);
+  });
+});

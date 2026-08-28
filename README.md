@@ -98,6 +98,12 @@ Solution in the shared `Common` project:
 ```
 
 
+## Views
+
+The header shows tabs. `0:active` is always first and lists every **queued / running / awaiting-approval** pipeline or release across all configured solutions — approvals first, then oldest-started. The tab shows a count and `⏸n` when approvals are pending. The app starts on this view.
+
+Then one tab per solution (`1:8903da`, `2:10013da`, …). With ≤2 solutions on a wide terminal they're shown side by side as a single view instead.
+
 ## Keys
 
 | key | action |
@@ -107,8 +113,9 @@ Solution in the shared `Common` project:
 | `o` | open selected run in browser |
 | `a` / `x` | approve / reject pending stage on selected release (`y` to confirm) |
 | `r` | refresh now |
-| `h` / `l` / `←` / `→` / `tab` | jump to the other project pane (same row) |
-| `1`–`9` | switch project tab (narrow terminal / >2 projects) |
+| `0` | active deploys view |
+| `1`–`9` | solution tab |
+| `h` / `l` / `←` / `→` / `tab` | previous / next view; in side-by-side layout, jump between panes (same row) and fall off the edge into the active view |
 | `q` | quit |
 
 Polls every 5s while anything is running / awaiting approval, else every 30s.

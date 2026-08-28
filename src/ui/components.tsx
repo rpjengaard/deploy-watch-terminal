@@ -95,12 +95,14 @@ export function TrackRow({
   expanded,
   now,
   width,
+  label,
 }: {
   track: Track;
   selected: boolean;
   expanded: boolean;
   now: number;
   width: number;
+  label?: React.ReactNode;
 }) {
   const run = track.latest;
   const inner = width - 4;
@@ -111,7 +113,7 @@ export function TrackRow({
         <Box flexGrow={1} flexShrink={1}>
           <Text inverse={selected} bold wrap="truncate-end">
             {selected ? '▸ ' : '  '}
-            {run ? <StatusIcon status={run.status} /> : <Text dimColor>○</Text>} {track.name}
+            {run ? <StatusIcon status={run.status} /> : <Text dimColor>○</Text>} {label ?? track.name}
             {selected ? ' ' : ''}
           </Text>
         </Box>
@@ -183,6 +185,61 @@ export function ProjectPane({
       )}
       {section('PIPELINES', project.pipelines)}
       {section('RELEASES', project.releases)}
+    </Box>
+  );
+}
+
+export function ActivePane({
+  tracks,
+  width,
+  selectedKey,
+  expanded,
+  now,
+}: {
+  tracks: Track[];
+  width: number;
+  selectedKey?: string;
+  expanded: Set<string>;
+  now: number;
+}) {
+  const inner = width - 4;
+  const pending = tracks.filter((t) => t.latest?.status === 'pending-approval').length;
+  return (
+    <Box flexDirection="column" width={width} borderStyle="round" borderColor="cyan" paddingX={1}>
+      <Box marginBottom={1}>
+        <Text bold color="cyan">
+          ACTIVE DEPLOYS
+        </Text>
+        <Text dimColor>
+          {' '}
+          · {tracks.length} active
+        </Text>
+        {pending > 0 && (
+          <Text color="yellow" bold>
+            {' '}
+            · {pending} awaiting approval
+          </Text>
+        )}
+      </Box>
+      {tracks.length === 0 ? (
+        <Text dimColor>nothing running — all quiet ✓</Text>
+      ) : (
+        tracks.map((t) => (
+          <TrackRow
+            key={t.key}
+            track={t}
+            selected={t.key === selectedKey}
+            expanded={expanded.has(t.key)}
+            now={now}
+            width={inner}
+            label={
+              <Text>
+                <Text color="cyan">{t.projectKey}</Text> · {t.name}
+              </Text>
+            }
+          />
+        ))
+      )}
     </Box>
   );
 }

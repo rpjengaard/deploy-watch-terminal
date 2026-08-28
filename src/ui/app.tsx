@@ -4,11 +4,13 @@ import Spinner from 'ink-spinner';
 import { spawn } from 'node:child_process';
 import type { Approver } from '../ado.ts';
 import type { Track, Stage } from '../model.ts';
+import { activeTracks } from '../model.ts';
 import { relative } from '../time.ts';
 import { useClock, usePoll, type Source } from './hooks.ts';
-import { ProjectPane } from './components.tsx';
+import { ActivePane, ProjectPane } from './components.tsx';
 
 const MIN_COL_WIDTH = 70;
+const ACTIVE_VIEW = 0;
 
 interface Confirm {
   action: 'approve' | 'reject';
@@ -33,19 +35,33 @@ export function App({ source, approver, quiet, org }: { source: Source; approver
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [confirm, setConfirm] = useState<Confirm>();
   const [message, setMessage] = useState<Message>();
-  const [tab, setTab] = useState(0);
+  const [view, setView] = useState(ACTIVE_VIEW);
 
-  const useTabs = poll.projects.length > 2 || columns < MIN_COL_WIDTH * Math.max(1, poll.projects.length);
-  const visibleProjects = useTabs ? poll.projects.slice(tab, tab + 1) : poll.projects;
-  const tracks = useMemo(() => visibleProjects.flatMap((p) => [...p.pipelines, ...p.releases]), [visibleProjects]);
+  const projects = poll.projects;
+  // Column layout: all projects side by side when they fit; otherwise one project per view.
+  const columnMode = projects.length <= 2 && columns >= MIN_COL_WIDTH * Math.max(1, projects.length);
+  const viewCount = 1 + (columnMode ? 1 : projects.length); // view 0 = active deploys
+  const visibleProjects = view === ACTIVE_VIEW ? [] : columnMode ? projects : projects.slice(view - 1, view);
+  const active = useMemo(() => activeTracks(projects), [projects]);
+  const tracks = useMemo(
+    () => (view === ACTIVE_VIEW ? active : visibleProjects.flatMap((p) => [...p.pipelines, ...p.releases])),
+    [view, active, visibleProjects],
+  );
   const current = tracks[Math.min(selected, Math.max(0, tracks.length - 1))];
 
   useEffect(() => {
     if (selected >= tracks.length) setSelected(Math.max(0, tracks.length - 1));
   }, [tracks.length, selected]);
+  useEffect(() => {
+    if (view >= viewCount) setView(Math.max(0, viewCount - 1));
+  }, [view, viewCount]);
 
   const say = (text: string, color = 'green', ms = 6000) => setMessage({ text, color, until: Date.now() + ms });
   const pendingStage = (t?: Track) => t?.latest?.stages.find((s) => s.status === 'pending-approval' && s.approvalId);
+  const goView = (v: number, sel = 0) => {
+    setView(((v % viewCount) + viewCount) % viewCount);
+    setSelected(sel);
+  };
 
   useInput(
     (input, key) => {
@@ -96,35 +112,67 @@ export function App({ source, approver, quiet, org }: { source: Source; approver
         setConfirm({ action: input === 'a' ? 'approve' : 'reject', track: current, stage });
         return;
       }
-      const dir = key.rightArrow || input === 'l' || key.tab ? 1 : key.leftArrow || input === 'h' ? -1 : 0;
-      if (dir && !useTabs) {
-        // jump to the neighbouring pane, keeping the same row position where possible
+      if (/^[0-9]$/.test(input)) {
+        const n = Number(input);
+        if (n < viewCount) goView(n);
+        return;
+      }
+      if (key.tab) return goView(view + 1);
+      const dir = key.rightArrow || input === 'l' ? 1 : key.leftArrow || input === 'h' ? -1 : 0;
+      if (!dir) return;
+      if (columnMode && view !== ACTIVE_VIEW) {
+        // jump to the neighbouring pane, keeping the same row position; fall off the edges into the active view
         const sizes = visibleProjects.map((p) => p.pipelines.length + p.releases.length);
-        let pi = 0, off = 0;
+        let pi = 0,
+          off = 0;
         while (pi < sizes.length - 1 && selected >= off + sizes[pi]!) off += sizes[pi++]!;
+        const target = pi + dir;
+        if (target < 0 || target >= sizes.length) return goView(ACTIVE_VIEW);
         const within = selected - off;
-        const target = (pi + dir + sizes.length) % sizes.length;
         const targetOff = sizes.slice(0, target).reduce((a, b) => a + b, 0);
         setSelected(targetOff + Math.min(within, Math.max(0, sizes[target]! - 1)));
         return;
       }
-      if (useTabs) {
-        if (dir) {
-          setTab((t) => (t + dir + poll.projects.length) % poll.projects.length);
-          setSelected(0);
-        }
-        const n = Number(input);
-        if (n >= 1 && n <= poll.projects.length) {
-          setTab(n - 1);
-          setSelected(0);
-        }
+      if (columnMode && view === ACTIVE_VIEW && dir === 1) {
+        // enter the projects view on its first pane
+        return goView(1, 0);
       }
+      if (columnMode && view === ACTIVE_VIEW && dir === -1) {
+        // wrap to the last pane of the projects view
+        const sizes = projects.map((p) => p.pipelines.length + p.releases.length);
+        const last = sizes.length - 1;
+        return goView(1, sizes.slice(0, last).reduce((a, b) => a + b, 0));
+      }
+      goView(view + dir);
     },
     { isActive: isRawModeSupported },
   );
 
   const colWidth = Math.floor(columns / Math.max(1, visibleProjects.length));
   const activeMsg = message && message.until > now ? message : undefined;
+  const pendingCount = active.filter((t) => t.latest?.status === 'pending-approval').length;
+
+  const tabLabels: { label: React.ReactNode; on: boolean }[] = [
+    {
+      on: view === ACTIVE_VIEW,
+      label: (
+        <Text>
+          0:active{active.length ? ` ${active.length}` : ''}
+          {pendingCount ? <Text color="yellow"> ⏸{pendingCount}</Text> : null}
+        </Text>
+      ),
+    },
+    ...(columnMode
+      ? [{ on: view !== ACTIVE_VIEW, label: <Text>1:{projects.map((p) => p.key).join(' · ')}</Text> }]
+      : projects.map((p, i) => ({
+          on: view === i + 1,
+          label: (
+            <Text>
+              {i + 1}:{p.key}
+            </Text>
+          ),
+        }))),
+  ];
 
   return (
     <Box flexDirection="column" width={columns} height={rows}>
@@ -134,18 +182,13 @@ export function App({ source, approver, quiet, org }: { source: Source; approver
           <Text bold color="cyan">
             deploy-watch
           </Text>
-          <Text dimColor> · {org}</Text>
-          {useTabs && (
-            <Text>
-              {'  '}
-              {poll.projects.map((p, i) => (
-                <Text key={p.key} inverse={i === tab} dimColor={i !== tab}>
-                  {' '}
-                  {i + 1}:{p.key}{' '}
-                </Text>
-              ))}
+          <Text dimColor> · {org} </Text>
+          {tabLabels.map((t, i) => (
+            <Text key={i} inverse={t.on} dimColor={!t.on} bold={t.on}>
+              {' '}
+              {t.label}{' '}
             </Text>
-          )}
+          ))}
         </Text>
         <Text dimColor>
           {poll.loading ? (
@@ -176,16 +219,19 @@ export function App({ source, approver, quiet, org }: { source: Source; approver
 
       {/* body */}
       <Box flexGrow={1} flexDirection="row">
-        {poll.projects.length === 0 && (
+        {projects.length === 0 ? (
           <Box padding={1}>
             <Text dimColor>
               <Spinner type="dots" /> loading…
             </Text>
           </Box>
+        ) : view === ACTIVE_VIEW ? (
+          <ActivePane tracks={active} width={columns} selectedKey={current?.key} expanded={expanded} now={now} />
+        ) : (
+          visibleProjects.map((p) => (
+            <ProjectPane key={p.key} project={p} width={colWidth} selectedKey={current?.key} expanded={expanded} now={now} active />
+          ))
         )}
-        {visibleProjects.map((p) => (
-          <ProjectPane key={p.key} project={p} width={colWidth} selectedKey={current?.key} expanded={expanded} now={now} active />
-        ))}
       </Box>
 
       {/* footer */}
@@ -200,10 +246,7 @@ export function App({ source, approver, quiet, org }: { source: Source; approver
         ) : activeMsg ? (
           <Text color={activeMsg.color}>{activeMsg.text}</Text>
         ) : (
-          <Text dimColor>
-            j/k move · h/l pane · enter expand · o open · a approve · x reject · r refresh · q quit
-            {useTabs ? ' · tab/1-9 project' : ''}
-          </Text>
+          <Text dimColor>j/k move · h/l/tab/0-9 view · enter expand · o open · a approve · x reject · r refresh · q quit</Text>
         )}
         {pendingStage(current) && !confirm && (
           <Text color="yellow" bold>
