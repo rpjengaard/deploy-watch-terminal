@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "description": "Terminal UI to watch Azure DevOps pipelines & releases live, with approvals",
   "license": "MIT",
-  "author": "Ren\u00e9 Pjengaard Bank",
+  "author": "René Pjengaard Bank",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rpjengaard/deploy-watch-terminal.git"
@@ -35,11 +35,11 @@
     "mock": "bun run src/cli.tsx --mock",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
-    "build": "bun build --compile --minify --external react-devtools-core --external ws --outfile dist/deploy-watch src/cli.tsx",
+    "build": "bun build --compile --minify --outfile dist/deploy-watch src/cli.tsx",
     "build:all": "bun run build:mac-arm && bun run build:mac-x64 && bun run build:linux",
-    "build:mac-arm": "bun build --compile --minify --external react-devtools-core --external ws --target=bun-darwin-arm64 --outfile dist/deploy-watch-darwin-arm64 src/cli.tsx",
-    "build:mac-x64": "bun build --compile --minify --external react-devtools-core --external ws --target=bun-darwin-x64 --outfile dist/deploy-watch-darwin-x64 src/cli.tsx",
-    "build:linux": "bun build --compile --minify --external react-devtools-core --external ws --target=bun-linux-x64 --outfile dist/deploy-watch-linux-x64 src/cli.tsx"
+    "build:mac-arm": "bun build --compile --minify --target=bun-darwin-arm64 --outfile dist/deploy-watch-darwin-arm64 src/cli.tsx",
+    "build:mac-x64": "bun build --compile --minify --target=bun-darwin-x64 --outfile dist/deploy-watch-darwin-x64 src/cli.tsx",
+    "build:linux": "bun build --compile --minify --target=bun-linux-x64 --outfile dist/deploy-watch-linux-x64 src/cli.tsx"
   },
   "dependencies": {
     "ink": "^7.1.1",
@@ -49,6 +49,8 @@
   "devDependencies": {
     "@types/bun": "^1.4.0",
     "@types/react": "^19.2.18",
-    "typescript": "^7.0.2"
+    "react-devtools-core": "^7.0.1",
+    "typescript": "^7.0.2",
+    "ws": "^8.21.3"
   }
 }
