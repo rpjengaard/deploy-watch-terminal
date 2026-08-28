@@ -48,10 +48,10 @@ export class AdoClient implements Approver {
       this.cfg.projects.map(async (p) => {
         try {
           const [pipelines, releases] = await Promise.all([this.fetchPipelines(p), this.fetchReleases(p)]);
-          return { key: p.key, name: p.name, pipelines, releases };
+          return { key: p.key, name: displayProject(p), pipelines, releases };
         } catch (e) {
           if (e instanceof AuthError) throw e;
-          return { key: p.key, name: p.name, pipelines: [], releases: [], error: (e as Error).message };
+          return { key: p.key, name: displayProject(p), pipelines: [], releases: [], error: (e as Error).message };
         }
       }),
     );
@@ -62,6 +62,7 @@ export class AdoClient implements Approver {
   private async fetchPipelines(p: ProjectConfig): Promise<Track[]> {
     const b = this.base('dev', p.name);
     const defs = (await this.request<{ value: any[] }>(`${b}/build/definitions?${API}`)).value
+      .filter((d) => inFolder(d.path, p.folder))
       .filter((d) => !p.pipelines || p.pipelines.includes(d.id))
       .sort((a, b) => a.id - b.id);
     if (!defs.length) return [];
@@ -133,7 +134,10 @@ export class AdoClient implements Approver {
     const b = this.base('vsrm', p.name);
     const [defs, approvals] = await Promise.all([
       this.request<{ value: any[] }>(`${b}/release/definitions?${API}`).then((r) =>
-        r.value.filter((d) => !p.releases || p.releases.includes(d.id)).sort((a, b) => a.id - b.id),
+        r.value
+          .filter((d) => inFolder(d.path, p.folder))
+          .filter((d) => !p.releases || p.releases.includes(d.id))
+          .sort((a, b) => a.id - b.id),
       ),
       this.request<{ value: any[] }>(`${b}/release/approvals?statuses=pending&${API}`).then((r) => r.value),
     ]);
@@ -210,4 +214,17 @@ export function displayName(name?: string): string {
   if (!name) return '';
   if (/^Microsoft\.VisualStudio\.Services/.test(name)) return 'CI';
   return name;
+}
+
+/** ADO definition paths look like "\\10260ny" or "\\10260ny\\sub"; match folder (case-insensitive) or any subfolder. */
+export function inFolder(path: string | undefined, folder?: string): boolean {
+  if (!folder) return true;
+  const norm = (s: string) => s.replace(/^[\\/]+|[\\/]+$/g, '').toLowerCase();
+  const want = norm(folder);
+  const have = norm(path ?? '');
+  return have === want || have.startsWith(want + '\\') || have.startsWith(want + '/');
+}
+
+export function displayProject(p: ProjectConfig): string {
+  return p.folder ? `${p.name} \\ ${p.folder}` : p.name;
 }

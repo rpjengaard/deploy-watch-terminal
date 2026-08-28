@@ -43,3 +43,19 @@ describe('anyActive', () => {
     expect(anyActive(mockProjects(0))).toBe(true);
   });
 });
+
+import { inFolder, displayProject } from '../ado.ts';
+describe('inFolder', () => {
+  test('matches folder and subfolders, ignores case and slashes', () => {
+    expect(inFolder('\\10260ny', '10260ny')).toBe(true);
+    expect(inFolder('\\10260ny\\sub', '10260ny')).toBe(true);
+    expect(inFolder('\\10260NY', '\\10260ny')).toBe(true);
+    expect(inFolder('\\10260nyx', '10260ny')).toBe(false);
+    expect(inFolder('\\', '10260ny')).toBe(false);
+    expect(inFolder('\\anything', undefined)).toBe(true);
+  });
+  test('displayProject', () => {
+    expect(displayProject({ key: 'k', name: 'Common', folder: '10260ny' })).toBe('Common \\ 10260ny');
+    expect(displayProject({ key: 'k', name: 'X' })).toBe('X');
+  });
+});

@@ -50,7 +50,20 @@ On 401 the token is re-fetched once; if that fails a red banner is shown and pol
 }
 ```
 
-`pipelines` / `releases` are optional definition-id filters; omit to show all.
+| field | meaning |
+|---|---|
+| `key` | short label you choose — used for `-p <key>`, tab labels, notifications. Must be unique |
+| `name` | exact Azure DevOps project name (`az devops project list --org https://dev.azure.com/LimboDevOps -o table`) |
+| `folder` | optional: only definitions in this folder of the project. For shared projects like `Common`, where each solution lives in a folder (`\10260ny`, `\10280he`, …) |
+| `pipelines` / `releases` | optional definition-id filters (`az pipelines list …`, `az pipelines release definition list …`) |
+
+Solution in the shared `Common` project:
+
+```json
+{ "key": "10260ny", "name": "Common", "folder": "10260ny" }
+```
+
+Env: `DEPLOY_WATCH_CONFIG=/path/to/config.json` overrides the config location.
 
 ## Keys
 
