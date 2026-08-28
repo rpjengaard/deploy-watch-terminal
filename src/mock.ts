@@ -3,10 +3,10 @@ import type { ProjectData, Run } from './model.ts';
 const min = (n: number) => new Date(Date.now() - n * 60_000).toISOString();
 
 const run = (o: Partial<Run> & Pick<Run, 'id' | 'name' | 'status'>): Run => ({
-  by: 'Rene Pjengaard Bank',
+  by: 'Ada Lovelace',
   queued: min(10),
   started: min(9),
-  url: 'https://dev.azure.com/LimboDevOps',
+  url: 'https://dev.azure.com/example',
   stages: [],
   ...o,
 });
@@ -18,7 +18,7 @@ export function mockProjects(tick: number): ProjectData[] {
   return [
     {
       key: '8903da',
-      name: '8903da - Danish Crown - Internal Website Solution',
+      name: '8903da - Acme - Intranet',
       pipelines: [
         {
           key: '8903da:pipeline:104', kind: 'pipeline', id: 104, name: 'DEV BE Build', projectKey: '8903da', projectName: '8903da',
@@ -65,7 +65,7 @@ export function mockProjects(tick: number): ProjectData[] {
     },
     {
       key: '10013da',
-      name: '10013da - Danish Crown - External Web',
+      name: '10013da - Acme - Website',
       pipelines: [
         {
           key: '10013da:pipeline:140', kind: 'pipeline', id: 140, name: 'BE Build - Dev', projectKey: '10013da', projectName: '10013da',
@@ -79,7 +79,7 @@ export function mockProjects(tick: number): ProjectData[] {
         },
         {
           key: '10013da:pipeline:159', kind: 'pipeline', id: 159, name: 'FE Build and Deploy', projectKey: '10013da', projectName: '10013da',
-          latest: run({ id: 11, name: 'Build-20260827.4', status: 'succeeded', branch: 'main', finished: min(1300), started: min(1317), queued: min(1318), by: 'Microsoft.VisualStudio.Services.TFS' }),
+          latest: run({ id: 11, name: 'Build-20260827.4', status: 'succeeded', branch: 'main', finished: min(1300), started: min(1317), queued: min(1318), by: 'CI' }),
           history: [],
         },
       ],

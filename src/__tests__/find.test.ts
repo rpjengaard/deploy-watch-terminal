@@ -12,7 +12,7 @@ const projects = [
     releases: [{ id: 16, name: '10344ra main be deploy', path: '\\10344ra' }],
   },
   {
-    name: '8903da - Danish Crown - Internal Website Solution',
+    name: '8903da - Acme - Intranet',
     pipelines: [{ id: 104, name: 'DEV BE Build', path: '\\' }],
     releases: [{ id: 1, name: '8903da dev be deploy', path: '\\' }],
   },
@@ -29,7 +29,7 @@ describe('groupHits', () => {
   test('project-name match → whole project, no folder', () => {
     const h = groupHits('8903', projects);
     expect(h).toHaveLength(1);
-    expect(h[0]!.suggested).toEqual({ key: '8903da', name: '8903da - Danish Crown - Internal Website Solution' });
+    expect(h[0]!.suggested).toEqual({ key: '8903da', name: '8903da - Acme - Intranet' });
     expect(h[0]!.pipelines).toHaveLength(1);
   });
   test('no match', () => {
