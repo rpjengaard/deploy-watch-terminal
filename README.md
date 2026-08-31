@@ -24,6 +24,7 @@ Needs the [Azure CLI](https://learn.microsoft.com/cli/azure/) (`az login`) — o
 **Binary** (recommended, no Bun needed) — with the [GitHub CLI](https://cli.github.com) logged in:
 
 ```sh
+sudo mkdir -p /usr/local/bin/deploy-watch
 gh release download -R rpjengaard/deploy-watch-terminal -p deploy-watch-darwin-arm64 -O /usr/local/bin/deploy-watch
 chmod +x /usr/local/bin/deploy-watch
 ```
