@@ -81,8 +81,12 @@ if (positionals[0] === 'find') {
   const hits = await find(client, term);
   console.log(formatHits(term, hits));
   if (values.add && hits.length) {
-    const added = addToConfig(hits);
-    console.log(added.length ? `Added to ${CONFIG_PATH}: ${added.join(', ')}` : `Nothing added — keys already in ${CONFIG_PATH}`);
+    // [CHANGE: unique project identity] Related: src/config.ts, src/find.ts, src/ado.ts, src/model.ts, src/mock.ts, src/ui/app.tsx
+    const r = addToConfig(hits);
+    if (r.added.length) console.log(`Added to ${CONFIG_PATH}: ${r.added.join(', ')}`);
+    for (const { from, to } of r.renamed) console.log(`  key "${from}" already used by another project/folder → added as "${to}"`);
+    if (r.updated.length) console.log(`Filled in projectId for: ${r.updated.join(', ')}`);
+    if (r.skipped.length) console.log(`Already watched: ${r.skipped.join(', ')}`);
   } else if (hits.length) {
     console.log(`Run again with --add to append these to ${CONFIG_PATH}`);
   }

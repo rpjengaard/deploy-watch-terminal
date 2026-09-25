@@ -37,7 +37,7 @@ export interface Track {
   id: number;
   name: string;
   projectKey: string;
-  projectName: string;
+  projectRef: string; // [CHANGE: unique project identity] Related: src/config.ts, src/find.ts, src/ado.ts, src/mock.ts, src/ui/app.tsx, src/cli.tsx — project id (or name) for API calls
   latest?: Run;
   history: Run[]; // completed runs after latest, newest first
 }

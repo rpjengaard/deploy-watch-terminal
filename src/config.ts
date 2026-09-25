@@ -4,7 +4,8 @@ import { dirname, join } from 'node:path';
 
 export interface ProjectConfig {
   key: string;
-  name: string; // exact Azure DevOps project name
+  name: string; // exact Azure DevOps project name (display + web links)
+  projectId?: string; // [CHANGE: unique project identity] Related: src/find.ts, src/ado.ts, src/model.ts, src/mock.ts, src/ui/app.tsx, src/cli.tsx — ADO project GUID; used for API calls when set (survives renames)
   folder?: string; // only definitions in this folder (e.g. "10260ny" for "\\10260ny"); omit = all folders
   pipelines?: number[]; // filter by definition id; omit = all
   releases?: number[];
@@ -17,6 +18,10 @@ export interface Config {
 
 export const CONFIG_DIR = join(homedir(), '.config', 'deploy-watch');
 export const CONFIG_PATH = process.env.DEPLOY_WATCH_CONFIG ?? join(CONFIG_DIR, 'config.json');
+
+/** Unique identity of an entry: project (id, else name) + folder. Two entries with the same identity watch the same thing. */
+export const identityOf = (p: Pick<ProjectConfig, 'name' | 'projectId' | 'folder'>) =>
+  `${(p.projectId ?? p.name).toLowerCase()}|${(p.folder ?? '').replace(/^[\\/]+|[\\/]+$/g, '').toLowerCase()}`;
 
 export class ConfigError extends Error {}
 
@@ -48,10 +53,14 @@ export function loadConfig(): Config {
   }
   if (!cfg.org || !Array.isArray(cfg.projects)) throw new ConfigError(`Invalid config at ${CONFIG_PATH}: needs "org" and "projects"`);
   const keys = new Set<string>();
+  const ids = new Map<string, string>(); // identity -> key
   for (const p of cfg.projects) {
     if (!p.key || !p.name) throw new ConfigError(`Project entries need "key" and "name" (${CONFIG_PATH})`);
     if (keys.has(p.key)) throw new ConfigError(`Duplicate project key "${p.key}" in ${CONFIG_PATH}`);
     keys.add(p.key);
+    const id = identityOf(p);
+    if (ids.has(id)) throw new ConfigError(`"${p.key}" and "${ids.get(id)}" watch the same project/folder in ${CONFIG_PATH}`);
+    ids.set(id, p.key);
   }
   return cfg;
 }

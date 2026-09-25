@@ -72,8 +72,9 @@ export function App({ source, approver, quiet, org }: { source: Source; approver
           if (!approver) return say('no approver available (mock mode)', 'yellow');
           const fn = c.action === 'approve' ? approver.approve : approver.reject;
           say(`${c.action === 'approve' ? 'Approving' : 'Rejecting'} ${c.track.latest?.name} → ${c.stage.name}…`, 'yellow');
+          // [CHANGE: unique project identity] Related: src/config.ts, src/find.ts, src/ado.ts, src/model.ts, src/mock.ts, src/cli.tsx
           fn
-            .call(approver, c.track.projectName, c.stage.approvalId!)
+            .call(approver, c.track.projectRef, c.stage.approvalId!)
             .then(() => {
               say(`${c.action === 'approve' ? 'Approved' : 'Rejected'} ${c.track.latest?.name} → ${c.stage.name}`);
               poll.refresh();

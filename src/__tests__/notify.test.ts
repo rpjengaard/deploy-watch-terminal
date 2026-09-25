@@ -6,7 +6,7 @@ const run = (id: number, status: Run['status'], stages: Run['stages'] = []): Run
   id, name: `Run-${id}`, status, by: 'x', queued: '2026-08-28T10:00:00Z', url: '', stages,
 });
 const snap = (latest?: Run): ProjectData[] => [
-  { key: 'p', name: 'P', pipelines: [{ key: 'p:pipeline:1', kind: 'pipeline', id: 1, name: 'Build', projectKey: 'p', projectName: 'P', latest, history: [] }], releases: [] },
+  { key: 'p', name: 'P', pipelines: [{ key: 'p:pipeline:1', kind: 'pipeline', id: 1, name: 'Build', projectKey: 'p', projectRef: 'P', latest, history: [] }], releases: [] },
 ];
 
 describe('diffTransitions', () => {

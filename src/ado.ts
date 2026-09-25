@@ -21,8 +21,8 @@ export interface DefSummary {
 }
 
 export interface Approver {
-  approve(projectName: string, approvalId: number): Promise<void>;
-  reject(projectName: string, approvalId: number): Promise<void>;
+  approve(projectRef: string, approvalId: number): Promise<void>;
+  reject(projectRef: string, approvalId: number): Promise<void>;
 }
 
 export class AdoClient implements Approver {
@@ -82,7 +82,7 @@ export class AdoClient implements Approver {
   // ---------- pipelines (build API) ----------
 
   private async fetchPipelines(p: ProjectConfig): Promise<Track[]> {
-    const b = this.base('dev', p.name);
+    const b = this.base('dev', projectRef(p));
     const defs = (await this.request<{ value: any[] }>(`${b}/build/definitions?${API}`)).value
       .filter((d) => inFolder(d.path, p.folder))
       .filter((d) => !p.pipelines || p.pipelines.includes(d.id))
@@ -131,7 +131,7 @@ export class AdoClient implements Approver {
         id: d.id,
         name: d.name,
         projectKey: p.key,
-        projectName: p.name,
+        projectRef: projectRef(p),
         latest: runs[0],
         history: runs.slice(1, HISTORY + 1),
       };
@@ -153,7 +153,7 @@ export class AdoClient implements Approver {
   // ---------- releases (vsrm API) ----------
 
   private async fetchReleases(p: ProjectConfig): Promise<Track[]> {
-    const b = this.base('vsrm', p.name);
+    const b = this.base('vsrm', projectRef(p));
     const [defs, approvals] = await Promise.all([
       this.request<{ value: any[] }>(`${b}/release/definitions?${API}`).then((r) =>
         r.value
@@ -207,7 +207,7 @@ export class AdoClient implements Approver {
           id: d.id,
           name: d.name,
           projectKey: p.key,
-          projectName: p.name,
+          projectRef: projectRef(p),
           latest: runs[0],
           history: runs.slice(1, HISTORY + 1),
         };
@@ -215,15 +215,15 @@ export class AdoClient implements Approver {
     );
   }
 
-  private async patchApproval(projectName: string, approvalId: number, status: 'approved' | 'rejected') {
-    await this.request(`${this.base('vsrm', projectName)}/release/approvals/${approvalId}?${API}`, {
+  private async patchApproval(project: string, approvalId: number, status: 'approved' | 'rejected') {
+    await this.request(`${this.base('vsrm', project)}/release/approvals/${approvalId}?${API}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status, comments: 'via deploy-watch' }),
     });
   }
-  approve = (projectName: string, id: number) => this.patchApproval(projectName, id, 'approved');
-  reject = (projectName: string, id: number) => this.patchApproval(projectName, id, 'rejected');
+  approve = (project: string, id: number) => this.patchApproval(project, id, 'approved');
+  reject = (project: string, id: number) => this.patchApproval(project, id, 'rejected');
 }
 
 export function shortBranch(ref?: string): string | undefined {
@@ -246,6 +246,10 @@ export function inFolder(path: string | undefined, folder?: string): boolean {
   const have = norm(path ?? '');
   return have === want || have.startsWith(want + '\\') || have.startsWith(want + '/');
 }
+
+// [CHANGE: unique project identity] Related: src/config.ts, src/find.ts, src/model.ts, src/mock.ts, src/ui/app.tsx, src/cli.tsx
+/** What to put in API URLs: the project GUID when known (unique, rename-proof), else the name. */
+export const projectRef = (p: ProjectConfig) => p.projectId ?? p.name;
 
 export function displayProject(p: ProjectConfig): string {
   return p.folder ? `${p.name} \\ ${p.folder}` : p.name;

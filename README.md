@@ -47,14 +47,14 @@ deploy-watch find 10344 --add          # search the org for a solution, add its 
 deploy-watch                           # watch
 ```
 
-`find` searches every project in the org for pipelines/releases whose **name, folder or project** contains the term (a job number, a customer name, anything) and prints a ready-to-paste config entry per project/folder:
+`find` searches every project in the org for pipelines/releases whose **name, folder or project** contains the term (a job number, a customer name, anything) and prints a ready-to-paste config entry per project/folder. Entries are identified by project id + folder, and pinned to the matched definition ids. `--add` skips anything already watched and renames a clashing key (e.g. `10013da` in *Common* vs. a root project `10013da - …` → `10013da-…`):
 
 ```
 Common \ 10344ra
   pipeline   213  10344ra BE Dev Build
   pipeline   214  10344ra BE Main Build
   release     24  10344ra dev be deploy
-  config:   {"key":"10344ra","name":"Common","folder":"10344ra"}
+  config:   {"key":"10344ra","projectId":"3f1c…","name":"Common","folder":"10344ra","pipelines":[213,214],"releases":[24]}
 ```
 
 ## Usage
@@ -101,7 +101,8 @@ deploy-watch find <term> [--add] [--org <org>]
 |---|---|
 | `org` | Azure DevOps organisation (`dev.azure.com/<org>`) |
 | `key` | short label you choose — used for `-p`, tab labels, notifications; must be unique |
-| `name` | exact Azure DevOps project name |
+| `name` | exact Azure DevOps project name (display, links) |
+| `projectId` | optional: project GUID — used for API calls when set; `find --add` fills it in |
 | `folder` | optional: only definitions in this folder — for shared projects where each solution lives in its own folder |
 | `pipelines` / `releases` | optional definition-id filters |
 
